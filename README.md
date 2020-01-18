@@ -9,5 +9,6 @@ pip install -r requirements.txt
 
 ## Examples of Usage
 See folder "Notebooks". <br>
-Basically run: jupyter notebook
+Basically run:  <br>
+<i>jupyter notebook </i><br>
 and follow via browser.
