@@ -1,9 +1,15 @@
-from lib.mesh_util import load_triangular_mesh, present_mesh
-from vtkplotter import *
-from trimesh import Trimesh
 import numpy as np
 from scipy import sparse
 from lib.laplacian_beltrami import LaplacianBeltrami, LaplaceBeltramiWeighting, DEFAULT_ANCHOR_WEIGHT
+
+
+def mean_curvature(mesh, weighting_scheme=LaplaceBeltramiWeighting.UMBRELLA):
+    """ Calculates mean curvature scalar field over the mesh, per vertex """
+    LB_operator = LaplacianBeltrami(mesh, weighting_scheme)
+    L = LB_operator.get_laplacian(normalize=False)
+    v = mesh.vertices
+    mean_curvature = np.linalg.norm(L * v, axis=1)
+    return mean_curvature
 
 
 def laplacian_smoothing(mesh, smooth_factor=1.0, iterations=1,
