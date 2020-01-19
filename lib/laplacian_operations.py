@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 from scipy import sparse
 from lib.laplacian_beltrami import LaplacianBeltrami, LaplaceBeltramiWeighting, DEFAULT_ANCHOR_WEIGHT
@@ -66,3 +67,21 @@ def resolve_laplace_matrix(mesh, LB_operator, anchors=None, anchor_idx=None, anc
     _solve_lsqr(mesh, L, anchors, anchor_idx)
     return LB_operator
 
+
+def spectral_decomposition(mesh, weighting_scheme, K, eps=1e-14):
+    LB_operator = LaplacianBeltrami(mesh, weighting_scheme)
+    L = LB_operator.get_laplacian(normalize=False)
+
+    robust_L = L * (sparse.eye(*L.shape) * eps)
+    eigenvalues, eigenvectors = sparse.linalg.eigsh(robust_L, K, which='LM', sigma=0)
+
+    return eigenvalues, eigenvectors
+
+
+def mesh_reconstruct(mesh, eigvectors, vec_count_to_use):
+    mesh = mesh.copy()  # Maintain the original
+    v = mesh.vertices
+    reconstruct_vecs = eigvectors[:, :vec_count_to_use]
+    updated_mesh = reconstruct_vecs @ reconstruct_vecs.transpose() @ v
+    mesh.vertices = updated_mesh
+    return mesh
