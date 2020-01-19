@@ -1,7 +1,3 @@
-from lib.mesh_util import load_triangular_mesh, present_mesh
-from vtkplotter import *
-from trimesh import Trimesh
-import numpy as np
 from scipy import sparse
 from enum import Enum
 from .geometry_util import *
@@ -12,6 +8,10 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 
 
 class LaplaceBeltramiWeighting(Enum):
+    """ Weighting scheme to use for the Laplace-Beltrami operator.
+        See Section 2.1 in Laplacian Mesh Processing (Olga Sorkine)
+        Link: https://people.eecs.berkeley.edu/~jrs/meshpapers/Sorkine.pdf
+    """
     UMBRELLA = 1
     COTANGENT_NO_AREA = 2
     COTANGENT_VORONOI_CELL = 3
@@ -20,10 +20,16 @@ class LaplaceBeltramiWeighting(Enum):
 
 class LaplacianBeltrami:
     """
-    Assumes mesh connectivity doesn't change
+    Holds Laplacian related information for a specific mesh.
+    Note: assumes mesh connectivity doesn't change.
     """
 
     def __init__(self, mesh, weighting_scheme=LaplaceBeltramiWeighting.UMBRELLA):
+        """
+        Constructs and calculates the LaplaceBeltrami operator for a specific mesh.
+        :param mesh: 3d triangular mesh, in Trimesh format.
+        :param weighting_scheme: Any of LaplaceBeltramiWeighting, determines how geometry is induced on LB.
+        """
         self.mesh = mesh
         self.weighting_scheme = weighting_scheme
 
@@ -37,9 +43,7 @@ class LaplacianBeltrami:
 
     def _build_laplacian_matrix(self):
         """
-        :param mesh: Trimesh of model
-        :param anchor_idx: List of vertex indices
-        :return: Sparse Laplacian matrix
+        :return: Initializes the data-structures required to build a sparse Laplacian matrix in coo format.
         """
         mesh = self.mesh
         vertex_degs = [len(neighbors) for neighbors in mesh.vertex_neighbors]
@@ -100,6 +104,12 @@ class LaplacianBeltrami:
         self.sparse_mat_weights = sparse_mat_weights
 
     def add_anchors(self, anchor_idx=None, weight=DEFAULT_ANCHOR_WEIGHT):
+        """
+        Marks the given vertices as anchors, add as constraint rows to the Laplacian.
+        :param anchor_idx: List of integers (vertex ids in the mesh)
+        :param weight: Increase to bias the effect of anchor constraints.
+        :return: Anchor information is updated in place within this object.
+        """
         mesh = self.mesh
         n = mesh.vertices.shape[0]
 
@@ -115,6 +125,11 @@ class LaplacianBeltrami:
             self.anchor_idx.extend(anchor_idx)
 
     def clear_anchors(self):
+        """
+        Removes all anchor related information from the Laplacian matrix, effectively leaving it in a newly
+        created state.
+        :return: This object is updated in place.
+        """
         n = self.mesh.vertices.shape[0]
         self.sparse_mat_rows = self.sparse_mat_rows[:n]
         self.sparse_mat_cols = self.sparse_mat_cols[:n]
@@ -122,6 +137,13 @@ class LaplacianBeltrami:
         self.anchor_idx = []
 
     def get_laplacian(self, normalize):
+        """
+        Uses the information stored within this object to construct an actual sparse Laplacian matrix.
+        :param normalize: True if the rows should be normalized to sum to 1.0 (useful for some applications,
+        i.e smoothing & sharpening.
+        :return: A sparse (n + k) x n matrix in csr format, where n is the number of vertices in the mesh
+                 and k is the number of anchors.
+        """
         n = self.mesh.vertices.shape[0]
         k = len(self.anchor_idx)
         sparse_mat_rows = flatten(self.sparse_mat_rows)
