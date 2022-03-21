@@ -1,11 +1,12 @@
 # LaplacianMeshEditing
 
 ## Requirements
-Python 3.7
+Python >=3.7
 
 ## Install
-conda install --file conda_requirements.txt <br>
-pip install -r requirements.txt
+`pip install -r requirements.txt`
+
+Note that dependency vedo==2022.1.0 requires a specific version of k3d to work. 
 
 ## Examples of Usage
 See folder "Notebooks/Examples" for demo applications <br><br>

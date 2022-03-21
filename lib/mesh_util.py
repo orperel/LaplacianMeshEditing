@@ -1,4 +1,4 @@
-from vtkplotter import *
+from vedo import *
 
 
 def load_triangular_mesh(mesh_path,
@@ -14,8 +14,8 @@ def load_triangular_mesh(mesh_path,
     :return: Trimesh of loaded object, with triangulated faces
     """
     mesh = load(mesh_path)
-    mesh = mesh.triangle()  # Ensure the mesh is triangular..
-    triangular_mesh = vtk2trimesh(mesh)
+    mesh = mesh.triangulate()  # Ensure the mesh is triangular..
+    triangular_mesh = vedo2trimesh(mesh)
     if keep_only_largest_component:
         triangular_mesh = triangular_mesh.split(only_watertight=only_watertight)[0]
     if is_preprocess:
@@ -29,6 +29,6 @@ def present_mesh(triangular_mesh):
     Converts Trimesh to vtkplotter format and presents it
     :param triangular_mesh: Trimesh of model
     """
-    output_mesh = trimesh2vtk(triangular_mesh)
+    output_mesh = trimesh2vedo(triangular_mesh)
     show(output_mesh)
     interactive()
