@@ -4,3 +4,5 @@ trimesh
 vedo==2022.1.0
 K3D==2.7.4
 jupyter
+networkx
+seaborn
